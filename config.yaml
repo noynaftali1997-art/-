@@ -77,8 +77,8 @@ sources:
       - צלםחתונות
       - צלמתהריון
       - lookingforaphotographer
-  reddit:          # חיפוש ברדיט (ללא מפתח)
-    enabled: true
+  reddit:          # חיפוש ברדיט (ללא מפתח) – כבוי: רדיט חוסם את שרתי GitHub
+    enabled: false
     queries:
       - "looking for photographer Israel"
       - "need photographer Tel Aviv"
