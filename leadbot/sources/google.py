@@ -27,22 +27,42 @@ class Serper(Source):
     env_vars = ("SERPER_API_KEY",)
     URL = "https://google.serper.dev/search"
 
+    # Serper rejects some parameter combinations with HTTP 400; fall back step by step.
+    FALLBACKS = (
+        {"gl": "il", "hl": "iw", "num": 20},
+        {"gl": "il", "hl": "he", "num": 10},
+        {"gl": "il"},
+        {},
+    )
+
+    def _search(self, q: str, window: str) -> list[dict] | None:
+        last = ""
+        for extra in self.FALLBACKS:
+            payload = {"q": q, "tbs": f"qdr:{window}", **extra}
+            try:
+                r = self.http.post(self.URL, json=payload, timeout=30,
+                                   headers={"X-API-KEY": self.env("SERPER_API_KEY")})
+            except Exception as e:
+                last = str(e)
+                continue
+            if r.ok:
+                return r.json().get("organic", [])
+            last = f"HTTP {r.status_code}: {r.text[:300]}"
+            if r.status_code in (401, 403) or "credit" in r.text.lower():
+                self.fatal = True  # bad key / no credits – retrying won't help
+                break
+        log.warning("[serper] %s -> %s", q, last)
+        return None
+
     def fetch(self) -> list[Lead]:
         window = self.global_cfg.get("search_time_window", "d")
         leads = []
+        self.fatal = False
         for q in build_queries(self.global_cfg):
-            try:
-                r = self.http.post(
-                    self.URL,
-                    headers={"X-API-KEY": self.env("SERPER_API_KEY")},
-                    json={"q": q, "gl": "il", "hl": "iw", "tbs": f"qdr:{window}", "num": 20},
-                    timeout=30,
-                )
-                r.raise_for_status()
-            except Exception as e:  # keep going with other queries
-                log.warning("[serper] %s -> %s", q, e)
-                continue
-            for item in r.json().get("organic", []):
+            if self.fatal:
+                break
+            items = self._search(q, window)
+            for item in items or []:
                 url = item.get("link", "")
                 leads.append(Lead(
                     source=self.name, platform=platform_from_url(url), url=url,
