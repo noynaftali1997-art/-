@@ -36,6 +36,10 @@ Google Alerts / rss.app (RSS)                             ┘      └─ הסר
   ומפתח API ב-Google Cloud (Custom Search API).
 
 ### 2. ערוץ קבלת לידים (חובה – לפחות אחד)
+* **וואטסאפ** – דרך השירות החינמי CallMeBot (לשימוש אישי):
+  שומרים באנשי הקשר את המספר של CallMeBot (מופיע ב-[callmebot.com](https://www.callmebot.com/blog/free-api-whatsapp-messages/)),
+  שולחים לו בוואטסאפ `I allow callmebot to send me messages`, ומקבלים API key.
+  סודות: `WHATSAPP_PHONE` (למשל `972501234567`) ו-`WHATSAPP_APIKEY`. נשלחים 15 הלידים הטובים ביותר.
 * **טלגרם (מומלץ)** – פותחים בוט אצל `@BotFather` ומקבלים `TELEGRAM_BOT_TOKEN`.
   שולחים לבוט הודעה, ואז נכנסים ל-`https://api.telegram.org/bot<TOKEN>/getUpdates`
   ולוקחים את `chat.id` → זה `TELEGRAM_CHAT_ID`.

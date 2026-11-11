@@ -10,7 +10,7 @@ import yaml
 
 from .classifier import Classifier
 from .models import Lead
-from .notify import send_email, send_telegram
+from .notify import send_email, send_telegram, send_whatsapp
 from .sources import ALL_SOURCES
 from .storage import SeenStore, write_csv
 
@@ -73,6 +73,7 @@ def run(config_path: str = "config.yaml", dry_run: bool = False) -> list[Lead]:
 
     limit = int(cfg.get("max_leads_in_message", 30))
     for sender in (lambda: send_telegram(leads, today.isoformat(), limit, csv_path),
+                   lambda: send_whatsapp(leads, today.isoformat(), int(cfg.get("max_leads_in_whatsapp", 15))),
                    lambda: send_email(leads, today.isoformat(), csv_path)):
         try:
             sender()

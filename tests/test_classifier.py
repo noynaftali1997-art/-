@@ -88,3 +88,12 @@ def test_google_alerts_rss():
     assert leads[0].url == "https://www.facebook.com/groups/1/posts/9"
     assert leads[0].platform == "facebook"
     assert len(filter_leads(leads, clf)) == 1
+
+
+def test_whatsapp_messages_split_and_short():
+    from leadbot.notify import format_whatsapp
+    leads = [Lead("serper", "facebook", f"https://facebook.com/p/{i}", "מחפשת צלם לחתונה " * 20)
+             for i in range(15)]
+    msgs = format_whatsapp(leads, "2026-11-11", 15)
+    assert len(msgs) > 1 and all(len(m) <= 1600 for m in msgs)
+    assert "https://facebook.com/p/14" in "".join(msgs)

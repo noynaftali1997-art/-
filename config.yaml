@@ -214,3 +214,4 @@ output_dir: output        # קבצי CSV יומיים (לא נשמרים ב-git)
 seen_file: data/seen.json # זיכרון של לידים שכבר נשלחו (רק hash, בלי מידע אישי)
 seen_retention_days: 90
 max_leads_in_message: 30
+max_leads_in_whatsapp: 15  # וואטסאפ – הלידים עם הציון הגבוה ביותר

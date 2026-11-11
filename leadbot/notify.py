@@ -92,3 +92,40 @@ def send_email(leads: list[Lead], day: str, csv_path: Path | None) -> None:
         s.login(user, pwd)
         s.send_message(msg)
     log.info("[email] sent to %s", to)
+
+
+def format_whatsapp(leads: list[Lead], day: str, limit: int) -> list[str]:
+    """Plain-text messages, kept short (CallMeBot handles ~1,500 chars well)."""
+    header = f"📷 לידים לצלם – {day}\nנמצאו {len(leads)} לידים חדשים\n"
+    if not leads:
+        return [header + "\nאין לידים חדשים היום."]
+    blocks = []
+    for i, l in enumerate(leads[:limit], 1):
+        ev = f" | {l.event_type}" if l.event_type else ""
+        blocks.append(f"{i}. {ICONS.get(l.platform, '🌐')} {l.platform}{ev}\n{_snippet(l.text, 160)}\n{l.url}")
+    if len(leads) > limit:
+        blocks.append(f"…ועוד {len(leads) - limit} לידים")
+    messages, cur = [], header
+    for b in blocks:
+        if len(cur) + len(b) + 2 > 1400:
+            messages.append(cur)
+            cur = ""
+        cur += "\n" + b + "\n"
+    messages.append(cur)
+    return messages
+
+
+def send_whatsapp(leads: list[Lead], day: str, limit: int) -> None:
+    """WhatsApp to your own phone via CallMeBot (free, personal use)."""
+    phone, key = os.environ.get("WHATSAPP_PHONE"), os.environ.get("WHATSAPP_APIKEY")
+    if not (phone and key):
+        log.info("[whatsapp] not configured")
+        return
+    import time
+    for msg in format_whatsapp(leads, day, limit):
+        r = requests.get("https://api.callmebot.com/whatsapp.php", timeout=60,
+                         params={"phone": phone, "text": msg, "apikey": key})
+        if not r.ok:
+            log.warning("[whatsapp] HTTP %s %s", r.status_code, r.text[:200])
+        time.sleep(3)  # CallMeBot asks for a gap between messages
+    log.info("[whatsapp] sent")
